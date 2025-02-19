@@ -6,18 +6,27 @@ import { Leaderboard } from './components/Leaderboard';
 import { useBook } from './hooks/useBook';
 import { Auth } from './components/Auth';
 import { Landing } from './components/Landing';
+import { ImageGenerator } from './components/ImageGenerator';
 
-type View = 'home' | 'reader' | 'leaderboard';
+type View = 'home' | 'reader' | 'leaderboard' | 'test';
 
 function App() {
   const [session, setSession] = useState<boolean>(false);
   const [showAuth, setShowAuth] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [view, setView] = useState<View>('home');
+  const [view, setView] = useState<View>('test'); 
   const { books, currentBook, loadBook, selectBook, clearBook, progress, status } = useBook();
   const handleSignOut = () => {
     setSession(false);
   };
+
+  if (view === 'test') {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <ImageGenerator />
+      </div>
+    );
+  }
 
   if (!session && !showAuth) {
     return <Landing onGetStarted={() => setShowAuth(true)} />;

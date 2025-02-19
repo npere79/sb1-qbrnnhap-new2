@@ -7,7 +7,7 @@ const replicate = new Replicate({
 });
 
 export function ImageGenerator() {
-  const [prompt, setPrompt] = useState('black forest gateau cake spelling out the words "FLUX SCHNELL", tasty, food photography, dynamic shot');
+  const [prompt, setPrompt] = useState('A beautiful sunset over a calm ocean');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -22,17 +22,9 @@ export function ImageGenerator() {
     try {
       setStatus('Creating prediction...');
       const prediction = await replicate.predictions.create({
-        version: "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+        version: "black-forest-labs/flux-schnell",
         input: {
-          prompt: prompt,
-          negative_prompt: "",
-          width: 1024,
-          height: 1024,
-          num_outputs: 1,
-          scheduler: "K_EULER",
-          num_inference_steps: 50,
-          guidance_scale: 7.5,
-          seed: 0
+          prompt: prompt
         }
       });
 
@@ -49,8 +41,8 @@ export function ImageGenerator() {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
-      if (result.status === "succeeded" && result.output?.[0]) {
-        setImageUrl(result.output[0]);
+      if (result.status === "succeeded" && result.output) {
+        setImageUrl(result.output);
         setStatus('');
       } else {
         throw new Error('Failed to generate image');
