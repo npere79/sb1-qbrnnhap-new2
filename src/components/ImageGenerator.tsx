@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import Replicate from 'replicate';
 
+// Initialize Replicate with API token
+const apiToken = import.meta.env.VITE_REPLICATE_API_TOKEN;
 const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN,
+  auth: apiToken,
 });
 
 export function ImageGenerator() {
@@ -14,6 +16,11 @@ export function ImageGenerator() {
   const [status, setStatus] = useState<string>('Ready to generate');
 
   const handleGenerate = async () => {
+    if (!apiToken) {
+      setError('API token not found. Please check your environment configuration.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setStatus('Preparing request...');
@@ -80,7 +87,7 @@ export function ImageGenerator() {
 
         <button
           onClick={handleGenerate}
-          disabled={loading}
+          disabled={loading || !apiToken}
           className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg py-3 font-medium hover:from-emerald-600 hover:to-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mb-4"
         >
           {loading ? (
@@ -88,6 +95,8 @@ export function ImageGenerator() {
               <Loader2 className="w-5 h-5 animate-spin mr-2" />
               <span>{status}</span>
             </>
+          ) : !apiToken ? (
+            'API Token Not Found'
           ) : (
             'Generate Image'
           )}
