@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Loader2, AlertTriangle } from 'lucide-react';
-import { fal } from '@fal-ai/client';
+import Replicate from 'replicate';
+
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
+});
 
 export function ImageGenerator() {
   const [prompt, setPrompt] = useState('black forest gateau cake spelling out the words "FLUX SCHNELL", tasty, food photography, dynamic shot');
@@ -16,28 +20,41 @@ export function ImageGenerator() {
     setImageUrl(null);
 
     try {
-      setStatus('Generating image with FLUX...');
-      const result = await fal.subscribe('fal-ai/flux/schnell', {
+      setStatus('Creating prediction...');
+      const prediction = await replicate.predictions.create({
+        version: "39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
         input: {
-          prompt,
-          image_size: 'landscape_16_9',
-          num_inference_steps: 4,
-          enable_safety_checker: true
-        },
-        logs: true,
-        onQueueUpdate: (update) => {
-          if (update.status === 'IN_PROGRESS') {
-            setStatus('Processing: ' + update.logs[update.logs.length - 1]?.message || 'Generating...');
-          }
+          prompt: prompt,
+          negative_prompt: "",
+          width: 1024,
+          height: 1024,
+          num_outputs: 1,
+          scheduler: "K_EULER",
+          num_inference_steps: 50,
+          guidance_scale: 7.5,
+          seed: 0
         }
       });
 
-      if (!result.data?.images?.[0]?.url) {
-        throw new Error('No image was generated');
+      setStatus('Waiting for image generation...');
+      
+      // Poll for the result
+      let result;
+      while (true) {
+        result = await replicate.predictions.get(prediction.id);
+        if (result.status === "succeeded" || result.status === "failed") {
+          break;
+        }
+        setStatus(`Processing: ${result.status}`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
-
-      setImageUrl(result.data.images[0].url);
-      setStatus('');
+      
+      if (result.status === "succeeded" && result.output?.[0]) {
+        setImageUrl(result.output[0]);
+        setStatus('');
+      } else {
+        throw new Error('Failed to generate image');
+      }
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to generate image';
@@ -67,7 +84,6 @@ export function ImageGenerator() {
               placeholder="Describe your image..."
             />
           </div>
-
         </div>
 
         <button
